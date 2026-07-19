@@ -23,3 +23,11 @@ export interface PaymentHistory {
   paymentMethodType: PaymentMethodType;
   chargedToItemId?: number; // Foreign Key pointing to a Credit Card's RecurringItem ID
 }
+
+export interface NotificationLog {
+  id?: number;
+  itemId: number;
+  milestone: 5 | 3 | 1 | 0; // 5 days, 3 days, tomorrow(1), today(0)
+  dueDate: string;          // The specific due date we alerted about "YYYY-MM-DD"
+  timestamp: string;        // When we fired the notification (ISO string)
+}

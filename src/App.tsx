@@ -1,14 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard'
 import { PaidSummary } from './components/PaidSummary'
 import { Projections } from './components/Projections'
 import { BottomNavigation, type TabType } from './components/BottomNavigation'
 import { AddItemDrawer } from './components/AddItemDrawer'
 import { Activity, Plus } from 'lucide-react'
+import { requestNotificationPermission, checkAndFireNotifications } from './lib/notifications'
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    // Check notifications on mount and then every hour if left open
+    const runNotifications = async () => {
+      await requestNotificationPermission();
+      await checkAndFireNotifications();
+    };
+
+    runNotifications();
+    const interval = setInterval(runNotifications, 1000 * 60 * 60);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-space-900 text-gray-100 pb-24 md:pb-28 selection:bg-aqua-500/30">
