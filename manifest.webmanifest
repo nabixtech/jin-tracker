@@ -1,0 +1,1 @@
+{"name":"JinTracker","short_name":"JinTracker","description":"Offline-first personal finance tracker","start_url":"/jin-tracker/","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","lang":"en","scope":"/jin-tracker/","icons":[{"src":"favicon.svg","sizes":"192x192 512x512","type":"image/svg+xml","purpose":"any maskable"}]}
