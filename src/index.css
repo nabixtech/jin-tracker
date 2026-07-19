@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-aqua-400: #22d3ee;
+  --color-aqua-500: #06b6d4;
+  --color-electra-500: #3b82f6;
+  --color-space-900: #0b0f19;
+  --color-space-800: #111827;
+  --color-space-700: #1f2937;
+}
+
+body {
+  @apply bg-space-900 text-gray-100;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-space-700 rounded-full; 
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500; 
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  @apply bg-space-800/60 backdrop-blur-md border border-space-700/50 shadow-xl;
+}
