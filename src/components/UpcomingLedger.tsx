@@ -4,7 +4,7 @@ import { db } from '../db/database';
 import { type RecurringItem } from '../types';
 import { skipBillingCycle } from '../lib/businessLogic';
 import { MarkAsPaidDrawer } from './MarkAsPaidDrawer';
-import { CreditCard, Zap, Wrench, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Zap, Wrench, RefreshCw, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function UpcomingLedger() {
@@ -27,6 +27,15 @@ export function UpcomingLedger() {
   const handleSkip = async (item: RecurringItem) => {
     if (confirm(`Skip ${item.name} for this month?`)) {
       await skipBillingCycle(item);
+    }
+  };
+
+  const handleDelete = async (item: RecurringItem) => {
+    if (confirm(`Are you sure you want to delete ${item.name}? This action cannot be undone.`)) {
+      if (item.id) {
+        await db.recurringItems.delete(item.id);
+        await db.paymentHistory.where('itemId').equals(item.id).delete();
+      }
     }
   };
 
@@ -133,6 +142,13 @@ export function UpcomingLedger() {
                         title="Skip this month"
                       >
                         Skip
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item)}
+                        className="p-2 text-gray-500 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-lg transition-all flex items-center justify-center"
+                        title="Delete bill"
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
