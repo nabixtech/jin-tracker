@@ -4,12 +4,16 @@ import { db } from '../db/database';
 import { type RecurringItem } from '../types';
 import { skipBillingCycle } from '../lib/businessLogic';
 import { MarkAsPaidDrawer } from './MarkAsPaidDrawer';
-import { CreditCard, Zap, Wrench, RefreshCw, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
+import { AddItemDrawer } from './AddItemDrawer';
+import { CreditCard, Zap, Wrench, RefreshCw, AlertCircle, CheckCircle2, Trash2, Edit2, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function UpcomingLedger() {
   const [selectedItem, setSelectedItem] = useState<RecurringItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<RecurringItem | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
   const items = useLiveQuery(
     async () => {
@@ -22,6 +26,11 @@ export function UpcomingLedger() {
   const handleMarkPaidClick = (item: RecurringItem) => {
     setSelectedItem(item);
     setIsDrawerOpen(true);
+  };
+
+  const handleEditClick = (item: RecurringItem) => {
+    setItemToEdit(item);
+    setIsEditDrawerOpen(true);
   };
 
   const handleSkip = async (item: RecurringItem) => {
@@ -129,27 +138,60 @@ export function UpcomingLedger() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 relative">
                       <button
                         onClick={() => handleMarkPaidClick(item)}
                         className="px-3 md:px-4 py-2 bg-aqua-500/10 text-aqua-400 border border-aqua-500/20 hover:bg-aqua-500 hover:text-space-900 hover:border-aqua-500 font-bold rounded-lg transition-all flex items-center justify-center text-xs uppercase tracking-wide shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                       >
                         Pay
                       </button>
-                      <button
-                        onClick={() => handleSkip(item)}
-                        className="px-3 md:px-4 py-2 text-gray-400 hover:bg-space-700 hover:text-gray-200 border border-transparent hover:border-space-600 font-bold rounded-lg transition-all flex items-center justify-center text-xs uppercase tracking-wide"
-                        title="Skip this month"
-                      >
-                        Skip
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item)}
-                        className="p-2 text-gray-500 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-lg transition-all flex items-center justify-center"
-                        title="Delete bill"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenDropdownId(openDropdownId === item.id ? null : (item.id || null))}
+                          className="p-2 text-gray-400 hover:bg-space-700 hover:text-gray-200 border border-transparent hover:border-space-600 rounded-lg transition-all flex items-center justify-center"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        
+                        {openDropdownId === item.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenDropdownId(null)}
+                            />
+                            <div className="absolute right-0 mt-2 w-36 bg-space-800 border border-space-700 rounded-xl shadow-xl z-20 overflow-hidden py-1">
+                              <button
+                                onClick={() => {
+                                  setOpenDropdownId(null);
+                                  handleEditClick(item);
+                                }}
+                                className="w-full flex items-center px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-space-700 hover:text-white transition-colors"
+                              >
+                                <Edit2 size={14} className="mr-2" /> Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenDropdownId(null);
+                                  handleSkip(item);
+                                }}
+                                className="w-full flex items-center px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-space-700 hover:text-white transition-colors"
+                              >
+                                <RefreshCw size={14} className="mr-2" /> Skip
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenDropdownId(null);
+                                  handleDelete(item);
+                                }}
+                                className="w-full flex items-center px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 size={14} className="mr-2" /> Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -163,6 +205,15 @@ export function UpcomingLedger() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         item={selectedItem}
+      />
+      <AddItemDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => {
+          setIsEditDrawerOpen(false);
+          // Small delay before clearing item to let drawer close animation finish smoothly
+          setTimeout(() => setItemToEdit(null), 300);
+        }}
+        itemToEdit={itemToEdit}
       />
     </>
   );

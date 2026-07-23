@@ -9,9 +9,10 @@ import { format } from 'date-fns';
 interface AddItemDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  itemToEdit?: RecurringItem | null;
 }
 
-export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
+export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ItemCategory>('Subscription');
   const [costEstimate, setCostEstimate] = useState<number>(0);
@@ -34,8 +35,28 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
     if (isOpen) {
       setIsVisible(true);
       setIsAnimatingOut(false);
+      
+      if (itemToEdit) {
+        setName(itemToEdit.name);
+        setCategory(itemToEdit.category);
+        setCostEstimate(itemToEdit.costEstimate);
+        setFrequency(itemToEdit.frequency);
+        setNextDueDate(itemToEdit.nextDueDate);
+        setEndDate(itemToEdit.endDate || '');
+        setPaymentLink(itemToEdit.paymentLink || '');
+        setIsVariableCost(itemToEdit.isVariableCost);
+      } else {
+        setName('');
+        setCategory('Subscription');
+        setCostEstimate(0);
+        setFrequency('Monthly');
+        setNextDueDate('');
+        setEndDate('');
+        setPaymentLink('');
+        setIsVariableCost(false);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, itemToEdit]);
 
   const handleClose = () => {
     setIsAnimatingOut(true);
@@ -58,35 +79,28 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
       isVariableCost,
       ...(paymentLink ? { paymentLink } : {}),
       ...(endDate && frequency !== 'One-Off' ? { endDate } : {}),
-      status: frequency === 'One-Off' ? 'Paid' : 'Active'
+      status: itemToEdit ? itemToEdit.status : (frequency === 'One-Off' ? 'Paid' : 'Active')
     };
     
-    // If one-off, use today for the record before saving
-    if (frequency === 'One-Off') {
+    if (frequency === 'One-Off' && !itemToEdit) {
       newItem.nextDueDate = format(new Date(), 'yyyy-MM-dd');
     }
 
-    const newId = await db.recurringItems.add(newItem);
-    
-    // If one-off, immediately process it as a payment
-    if (frequency === 'One-Off') {
-      await processPaymentTransaction(
-        { ...newItem, id: newId } as RecurringItem,
-        costEstimate,
-        method,
-        method === 'Credit Card' ? selectedCardId : undefined,
-        false
-      );
+    if (itemToEdit && itemToEdit.id) {
+      await db.recurringItems.update(itemToEdit.id, newItem);
+    } else {
+      const newId = await db.recurringItems.add(newItem);
+      
+      if (frequency === 'One-Off') {
+        await processPaymentTransaction(
+          { ...newItem, id: newId } as RecurringItem,
+          costEstimate,
+          method,
+          method === 'Credit Card' ? selectedCardId : undefined,
+          false
+        );
+      }
     }
-    
-    setName('');
-    setCategory('Subscription');
-    setCostEstimate(0);
-    setFrequency('Monthly');
-    setNextDueDate('');
-    setEndDate('');
-    setPaymentLink('');
-    setIsVariableCost(false);
     
     handleClose();
   };
@@ -116,7 +130,7 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
             </button>
             
             <h2 className="text-2xl font-bold mb-6 text-white bg-clip-text text-transparent bg-gradient-to-r from-aqua-400 to-electra-500 pr-10">
-              Add Bill
+              {itemToEdit ? 'Edit Bill' : 'Add Bill'}
             </h2>
           </div>
           
@@ -177,7 +191,7 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
                 )}
               </div>
 
-              {frequency === 'One-Off' && (
+              {frequency === 'One-Off' && !itemToEdit && (
                 <>
                   <div>
                     <label className={labelClasses}>Paid From</label>
@@ -244,7 +258,7 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
                   type="submit"
                   className="w-full py-3.5 text-sm font-bold text-space-900 bg-aqua-400 hover:bg-aqua-300 rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all uppercase tracking-wide"
                 >
-                  Save Bill
+                  {itemToEdit ? 'Update Bill' : 'Save Bill'}
                 </button>
               </div>
             </form>
