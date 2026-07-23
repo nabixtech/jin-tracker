@@ -18,6 +18,7 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
   const [frequency, setFrequency] = useState<BillingFrequency>('Monthly');
   const [nextDueDate, setNextDueDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [paymentLink, setPaymentLink] = useState<string>('');
   const [method, setMethod] = useState<PaymentMethodType>('Cash/Bank');
   const [selectedCardId, setSelectedCardId] = useState<number | undefined>(undefined);
   const [isVariableCost, setIsVariableCost] = useState<boolean>(false);
@@ -55,6 +56,7 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
       frequency,
       nextDueDate,
       isVariableCost,
+      ...(paymentLink ? { paymentLink } : {}),
       ...(endDate && frequency !== 'One-Off' ? { endDate } : {}),
       status: frequency === 'One-Off' ? 'Paid' : 'Active'
     };
@@ -83,6 +85,7 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
     setFrequency('Monthly');
     setNextDueDate('');
     setEndDate('');
+    setPaymentLink('');
     setIsVariableCost(false);
     
     handleClose();
@@ -217,6 +220,15 @@ export function AddItemDrawer({ isOpen, onClose }: AddItemDrawerProps) {
                   />
                 </div>
               )}
+
+              <div>
+                <label className={labelClasses}>Payment Link (Optional)</label>
+                <input 
+                  type="url" className={inputClasses}
+                  value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)}
+                  placeholder="https://pay.example.com"
+                />
+              </div>
 
               <div className="flex items-center mt-2 bg-space-900/50 p-3 rounded-xl border border-space-700">
                 <input 
