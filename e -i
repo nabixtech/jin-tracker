@@ -1,0 +1,29 @@
+[33mcommit 9e6868c41f0756aca2b481540c527649dbedac3f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: nabixtech <nabixtech@gmail.com>
+Date:   Thu Jul 23 11:30:19 2026 +0800
+
+    remove ggithub_pat
+
+[33mcommit 25c2089c0bbf5aa655224844d54c27c53e1db2ec[m
+Author: nabixtech <nabixtech@gmail.com>
+Date:   Thu Jul 23 11:27:42 2026 +0800
+
+    labeling enhancement
+
+[33mcommit c2baf11d4e20623f65bd83358cfc78ad750cde44[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: nabixtech <nabixtech@gmail.com>
+Date:   Sun Jul 19 20:09:05 2026 +0800
+
+    Implement local push notifications
+
+[33mcommit cbb8db490862629f3e7c726b328a8467169503b9[m
+Author: nabixtech <nabixtech@gmail.com>
+Date:   Sun Jul 19 19:53:05 2026 +0800
+
+    Add PWA support
+
+[33mcommit af2f1de33070697efb2ad370ed539f3d1bb745d7[m[33m ([m[1;32mmaster[m[33m)[m
+Author: nabixtech <nabixtech@gmail.com>
+Date:   Sun Jul 19 19:30:26 2026 +0800
+
+    Initial commit for JinTracker
