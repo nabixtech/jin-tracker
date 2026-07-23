@@ -123,17 +123,16 @@ export function UpcomingLedger() {
                   <div className="flex items-center space-x-2">
                     <button 
                       onClick={() => handleMarkPaidClick(item)}
-                      className="px-3 md:px-4 py-2 bg-aqua-500/10 text-aqua-400 border border-aqua-500/20 hover:bg-aqua-500 hover:text-space-900 hover:border-aqua-500 font-bold rounded-lg transition-all flex items-center text-xs uppercase tracking-wide shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                      className="px-3 md:px-4 py-2 bg-aqua-500/10 text-aqua-400 border border-aqua-500/20 hover:bg-aqua-500 hover:text-space-900 hover:border-aqua-500 font-bold rounded-lg transition-all flex items-center justify-center text-xs uppercase tracking-wide shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                     >
-                      <Banknote size={16} className="md:mr-1.5" />
-                      <span className="hidden md:inline">Pay</span>
+                      Pay
                     </button>
                     <button 
                       onClick={() => handleSkip(item)}
-                      className="p-2 text-gray-500 hover:bg-space-700 hover:text-gray-300 rounded-lg border border-transparent hover:border-space-600 transition-all"
+                      className="px-3 md:px-4 py-2 text-gray-400 hover:bg-space-700 hover:text-gray-200 border border-transparent hover:border-space-600 font-bold rounded-lg transition-all flex items-center justify-center text-xs uppercase tracking-wide"
                       title="Skip this month"
                     >
-                      <FastForward size={16} />
+                      Skip
                     </button>
                   </div>
                 </div>
