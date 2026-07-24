@@ -1,5 +1,5 @@
 export type ItemCategory = 'Subscription' | 'Credit Card' | 'Maintenance' | 'Utility';
-export type BillingFrequency = 'Monthly' | 'Semi-Annually' | 'Annually' | 'One-Off';
+export type BillingFrequency = 'Monthly' | 'Semi-Monthly' | 'Semi-Annually' | 'Annually' | 'One-Off';
 export type PaymentMethodType = 'Cash/Bank' | 'Credit Card';
 
 export interface RecurringItem {

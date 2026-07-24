@@ -1,4 +1,4 @@
-import { addMonths, addYears, format, parseISO } from 'date-fns';
+import { addMonths, addYears, format, parseISO, setDate, lastDayOfMonth, getDate } from 'date-fns';
 import { db } from '../db/database';
 import { type RecurringItem, type PaymentMethodType } from '../types';
 
@@ -10,6 +10,18 @@ export function calculateNextDueDate(currentDateStr: string, frequency: string):
   let nextDate: Date;
 
   switch (frequency) {
+    case 'Semi-Monthly': {
+      const currentDay = getDate(date);
+      if (currentDay <= 15) {
+        const targetDay = currentDay + 15;
+        const maxDay = getDate(lastDayOfMonth(date));
+        nextDate = setDate(date, Math.min(targetDay, maxDay));
+      } else {
+        const targetDay = currentDay - 15;
+        nextDate = setDate(addMonths(date, 1), targetDay);
+      }
+      break;
+    }
     case 'Monthly':
       nextDate = addMonths(date, 1);
       break;

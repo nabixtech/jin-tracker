@@ -159,6 +159,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
                   <label className={labelClasses}>Frequency</label>
                   <select className={inputClasses} value={frequency} onChange={(e) => setFrequency(e.target.value as BillingFrequency)}>
                     <option value="One-Off">One-Off</option>
+                    <option value="Semi-Monthly">Twice a Month (Every 15 days)</option>
                     <option value="Monthly">Monthly</option>
                     <option value="Semi-Annually">Semi-Annually</option>
                     <option value="Annually">Annually</option>
