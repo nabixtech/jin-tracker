@@ -52,7 +52,7 @@ class FamilyBillDatabase extends Dexie {
 
     this.recurringItems.hook('updating', (modifications: any) => {
       if (modifications.accountNumber !== undefined) {
-        modifications.accountNumber = encryptString(modifications.accountNumber);
+        return { accountNumber: encryptString(modifications.accountNumber) };
       }
     });
 

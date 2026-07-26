@@ -86,8 +86,8 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
       frequency,
       nextDueDate,
       isVariableCost,
-      ...(paymentLink ? { paymentLink } : {}),
-      ...(accountNumber ? { accountNumber } : {}),
+      paymentLink: paymentLink || '',
+      accountNumber: accountNumber || '',
       ...(endDate && frequency !== 'One-Off' ? { endDate } : {}),
       status: itemToEdit ? itemToEdit.status : (frequency === 'One-Off' ? 'Paid' : 'Active')
     };
