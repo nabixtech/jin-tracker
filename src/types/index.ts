@@ -15,6 +15,7 @@ export interface RecurringItem {
   isVariableCost: boolean;  // True = varies per month (e.g., electricity); False = fixed
   endDate?: string;         // Optional end date for recurring bills "YYYY-MM-DD"
   paymentLink?: string;     // Optional link to payment portal
+  accountNumber?: string;   // Encrypted account number
   remainingBalance?: number; // Tracks partial payments within a single billing cycle
   status?: 'Active' | 'Paid'; // Active by default. Paid when one-off is paid or end date is reached.
 }

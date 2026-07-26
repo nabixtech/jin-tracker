@@ -21,6 +21,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
   const [nextDueDate, setNextDueDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [paymentLink, setPaymentLink] = useState<string>('');
+  const [accountNumber, setAccountNumber] = useState<string>('');
   const [method, setMethod] = useState<PaymentMethodType>('Cash/Bank');
   const [selectedCardId, setSelectedCardId] = useState<number | undefined>(undefined);
   const [isVariableCost, setIsVariableCost] = useState<boolean>(false);
@@ -48,6 +49,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         setNextDueDate(itemToEdit.nextDueDate);
         setEndDate(itemToEdit.endDate || '');
         setPaymentLink(itemToEdit.paymentLink || '');
+        setAccountNumber(itemToEdit.accountNumber || '');
         setIsVariableCost(itemToEdit.isVariableCost);
       } else {
         setName('');
@@ -57,6 +59,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         setNextDueDate('');
         setEndDate('');
         setPaymentLink('');
+        setAccountNumber('');
         setIsVariableCost(false);
       }
     }
@@ -84,6 +87,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
       nextDueDate,
       isVariableCost,
       ...(paymentLink ? { paymentLink } : {}),
+      ...(accountNumber ? { accountNumber } : {}),
       ...(endDate && frequency !== 'One-Off' ? { endDate } : {}),
       status: itemToEdit ? itemToEdit.status : (frequency === 'One-Off' ? 'Paid' : 'Active')
     };
@@ -251,6 +255,15 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
                   type="url" className={inputClasses}
                   value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)}
                   placeholder="https://pay.example.com"
+                />
+              </div>
+
+              <div>
+                <label className={labelClasses}>Account Number (Optional)</label>
+                <input 
+                  type="text" className={inputClasses}
+                  value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="e.g. 1234567890"
                 />
               </div>
 

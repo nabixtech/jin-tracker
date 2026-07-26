@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { type RecurringItem, type PaymentHistory, type NotificationLog } from '../types';
+import { encryptString, decryptString } from '../lib/encryption';
 
 class FamilyBillDatabase extends Dexie {
   recurringItems!: Table<RecurringItem, number>;
@@ -40,6 +41,26 @@ class FamilyBillDatabase extends Dexie {
           if (!item.itemSyncId && item.itemId) item.itemSyncId = itemMap.get(item.itemId);
         });
       });
+    });
+
+    // Add lifecycle hooks for encryption/decryption
+    this.recurringItems.hook('creating', (primKey, obj, trans) => {
+      if (obj.accountNumber) {
+        obj.accountNumber = encryptString(obj.accountNumber);
+      }
+    });
+
+    this.recurringItems.hook('updating', (modifications, primKey, obj, trans) => {
+      if (modifications.accountNumber !== undefined) {
+        modifications.accountNumber = encryptString(modifications.accountNumber);
+      }
+    });
+
+    this.recurringItems.hook('reading', (obj) => {
+      if (obj && obj.accountNumber) {
+        obj.accountNumber = decryptString(obj.accountNumber);
+      }
+      return obj;
     });
   }
 }

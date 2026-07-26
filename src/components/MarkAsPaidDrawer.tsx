@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { type RecurringItem, type PaymentMethodType } from '../types';
 import { db } from '../db/database';
 import { processPaymentTransaction } from '../lib/businessLogic';
-import { X, Check, ExternalLink } from 'lucide-react';
+import { X, Check, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 interface MarkAsPaidDrawerProps {
@@ -16,6 +16,7 @@ export function MarkAsPaidDrawer({ item, isOpen, onClose }: MarkAsPaidDrawerProp
   const [method, setMethod] = useState<PaymentMethodType>('Cash/Bank');
   const [selectedCardId, setSelectedCardId] = useState<number | undefined>(undefined);
   const [isPartial, setIsPartial] = useState<boolean>(false);
+  const [showFullAccount, setShowFullAccount] = useState<boolean>(false);
 
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
@@ -34,6 +35,7 @@ export function MarkAsPaidDrawer({ item, isOpen, onClose }: MarkAsPaidDrawerProp
       setIsAnimatingOut(false);
       setAmount(Math.max(0, item.remainingBalance ?? item.costEstimate));
       setIsPartial(false);
+      setShowFullAccount(false);
 
       if (item.id) {
         db.paymentHistory
@@ -110,6 +112,26 @@ export function MarkAsPaidDrawer({ item, isOpen, onClose }: MarkAsPaidDrawerProp
                   <a href={item.paymentLink} target="_blank" rel="noopener noreferrer" className="mt-1 py-3 w-full bg-aqua-500/10 text-aqua-400 border border-aqua-500/20 hover:bg-aqua-500 hover:text-space-900 rounded-xl text-center text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] uppercase tracking-wide">
                     Open Payment Portal <ExternalLink size={16} />
                   </a>
+                </div>
+              )}
+
+              {item.accountNumber && (
+                <div className="bg-space-900/50 p-4 rounded-2xl border border-space-700">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className={labelClasses} style={{ marginBottom: 0 }}>Account Number</label>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowFullAccount(!showFullAccount)}
+                      className="text-gray-400 hover:text-aqua-400 transition-colors"
+                    >
+                      {showFullAccount ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div className="text-white font-mono text-sm break-all flex items-center">
+                    {showFullAccount 
+                      ? item.accountNumber 
+                      : (item.accountNumber.length > 4 ? `•••• •••• ${item.accountNumber.slice(-4)}` : '••••')}
+                  </div>
                 </div>
               )}
 
