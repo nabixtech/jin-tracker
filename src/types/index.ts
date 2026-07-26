@@ -4,6 +4,9 @@ export type PaymentMethodType = 'Cash/Bank' | 'Credit Card';
 
 export interface RecurringItem {
   id?: number;              // Auto-incrementing primary key
+  syncId?: string;          // UUID for multi-device sync
+  updatedAt?: number;       // Timestamp for conflict resolution
+  deletedAt?: number;       // Timestamp for soft deletes
   name: string;             // e.g., "Meralco Bill", "Netflix Sub", "BPI Visa"
   category: ItemCategory;
   costEstimate: number;     // Acts as baseline budget buffer for variable items
@@ -18,7 +21,11 @@ export interface RecurringItem {
 
 export interface PaymentHistory {
   id?: number;              // Auto-incrementing primary key
+  syncId?: string;          // UUID for multi-device sync
+  updatedAt?: number;       // Timestamp for conflict resolution
+  deletedAt?: number;       // Timestamp for soft deletes
   itemId: number;           // Foreign Key linking back to the RecurringItem ID
+  itemSyncId?: string;      // UUID of the parent item (crucial for multi-device sync mapping)
   datePaid: string;         // "YYYY-MM-DD"
   costIncurred: number;     // The actual financial damage/amount paid out
   paymentMethodType: PaymentMethodType;
@@ -27,7 +34,11 @@ export interface PaymentHistory {
 
 export interface NotificationLog {
   id?: number;
+  syncId?: string;          // UUID for multi-device sync
+  updatedAt?: number;       // Timestamp for conflict resolution
+  deletedAt?: number;       // Timestamp for soft deletes
   itemId: number;
+  itemSyncId?: string;      // UUID of the parent item
   milestone: 5 | 3 | 1 | 0; // 5 days, 3 days, tomorrow(1), today(0)
   dueDate: string;          // The specific due date we alerted about "YYYY-MM-DD"
   timestamp: string;        // When we fired the notification (ISO string)

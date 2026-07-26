@@ -18,7 +18,7 @@ export function UpcomingLedger() {
   const items = useLiveQuery(
     async () => {
       const allItems = await db.recurringItems.orderBy('nextDueDate').toArray();
-      return allItems.filter(item => item.status !== 'Paid');
+      return allItems.filter(item => item.status !== 'Paid' && !item.deletedAt);
     },
     []
   );
@@ -42,8 +42,13 @@ export function UpcomingLedger() {
   const handleDelete = async (item: RecurringItem) => {
     if (confirm(`Are you sure you want to delete ${item.name}? This action cannot be undone.`)) {
       if (item.id) {
-        await db.recurringItems.delete(item.id);
-        await db.paymentHistory.where('itemId').equals(item.id).delete();
+        const now = Date.now();
+        await db.recurringItems.update(item.id, { deletedAt: now, updatedAt: now });
+        
+        const payments = await db.paymentHistory.where('itemId').equals(item.id).toArray();
+        for (const p of payments) {
+          if (p.id) await db.paymentHistory.update(p.id, { deletedAt: now, updatedAt: now });
+        }
       }
     }
   };

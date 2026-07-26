@@ -55,7 +55,10 @@ export async function processPaymentTransaction(
   await db.transaction('rw', [db.paymentHistory, db.recurringItems], async () => {
     // 1. Log transaction history block
     await db.paymentHistory.add({
+      syncId: crypto.randomUUID(),
+      updatedAt: Date.now(),
       itemId: item.id!,
+      itemSyncId: item.syncId,
       datePaid: todayStr,
       costIncurred: amount,
       paymentMethodType: method,
@@ -66,16 +69,17 @@ export async function processPaymentTransaction(
       // Deduct from remaining balance, do not advance cycle. Allow it to go negative (credit)
       const currentBalance = item.remainingBalance ?? item.costEstimate;
       await db.recurringItems.update(item.id!, {
-        remainingBalance: currentBalance - amount
+        remainingBalance: currentBalance - amount,
+        updatedAt: Date.now()
       });
     } else {
       // Full payment logic
       if (item.frequency === 'One-Off') {
-        await db.recurringItems.update(item.id!, { status: 'Paid', remainingBalance: 0 });
+        await db.recurringItems.update(item.id!, { status: 'Paid', remainingBalance: 0, updatedAt: Date.now() });
       } else {
         const futureCycleDate = calculateNextDueDate(item.nextDueDate, item.frequency);
         if (item.endDate && futureCycleDate > item.endDate) {
-          await db.recurringItems.update(item.id!, { status: 'Paid', remainingBalance: 0 });
+          await db.recurringItems.update(item.id!, { status: 'Paid', remainingBalance: 0, updatedAt: Date.now() });
         } else {
           // Rotate master obligation cycle date forward
           // Apply any excess payment (or existing credit) to the new cycle's balance
@@ -84,7 +88,8 @@ export async function processPaymentTransaction(
 
           await db.recurringItems.update(item.id!, {
             nextDueDate: futureCycleDate,
-            remainingBalance: newBalance
+            remainingBalance: newBalance,
+            updatedAt: Date.now()
           });
         }
       }
@@ -99,7 +104,7 @@ export async function processPaymentTransaction(
 export async function skipBillingCycle(item: RecurringItem): Promise<void> {
   if (!item.id) return;
   const futureCycleDate = calculateNextDueDate(item.nextDueDate, item.frequency);
-  await db.recurringItems.update(item.id, { nextDueDate: futureCycleDate });
+  await db.recurringItems.update(item.id, { nextDueDate: futureCycleDate, updatedAt: Date.now() });
 }
 
 /**
@@ -109,6 +114,7 @@ export async function computeMonthlyOutflow(yearMonthStr: string): Promise<numbe
   const history = await db.paymentHistory
     .where('datePaid')
     .between(`${yearMonthStr}-01`, `${yearMonthStr}-31`, true, true)
+    .filter(log => !log.deletedAt)
     .toArray();
 
   return history.reduce((accum, log) => accum + log.costIncurred, 0);

@@ -21,7 +21,10 @@ export function MarkAsPaidDrawer({ item, isOpen, onClose }: MarkAsPaidDrawerProp
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
   const creditCards = useLiveQuery(
-    () => db.recurringItems.where('category').equals('Credit Card').toArray(),
+    async () => {
+      const cards = await db.recurringItems.where('category').equals('Credit Card').toArray();
+      return cards.filter(c => !c.deletedAt);
+    },
     []
   );
 

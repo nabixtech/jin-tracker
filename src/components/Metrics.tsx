@@ -15,7 +15,7 @@ export function Metrics() {
         .where('nextDueDate')
         .belowOrEqual(`${currentMonth}-31`)
         .toArray();
-      return items.filter(item => item.status !== 'Paid');
+      return items.filter(item => item.status !== 'Paid' && !item.deletedAt);
     },
     [currentMonth]
   );

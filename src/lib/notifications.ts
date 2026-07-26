@@ -73,9 +73,16 @@ export const checkAndFireNotifications = async () => {
 
         try {
           // Attempt to show notification via Service Worker first (better mobile PWA support)
-          const registration = await navigator.serviceWorker.ready;
-          if (registration && registration.showNotification) {
-            await registration.showNotification(title, {
+          let swRegistration = null;
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            if (regs.length > 0) {
+              swRegistration = await navigator.serviceWorker.ready;
+            }
+          }
+
+          if (swRegistration && swRegistration.showNotification) {
+            await swRegistration.showNotification(title, {
               body,
               icon: '/jin-tracker/favicon.svg',
               tag: `bill-${item.id}-${currentMilestone}`, // Prevents duplicate stacking

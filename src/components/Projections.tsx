@@ -12,7 +12,8 @@ export function Projections() {
         .filter(item => 
           item.status !== 'Paid' && 
           item.isVariableCost === false && 
-          !!item.endDate
+          !!item.endDate &&
+          !item.deletedAt
         )
         .toArray();
       
@@ -27,11 +28,11 @@ export function Projections() {
       const enhanced = await Promise.all(
         items.map(async (item) => {
           // Find the most recent payment
-          const history = await db.paymentHistory
+          const history = (await db.paymentHistory
             .where('itemId')
             .equals(item.id!)
             .reverse()
-            .sortBy('datePaid');
+            .sortBy('datePaid')).filter(h => !h.deletedAt);
             
           let linkedCardName = undefined;
           

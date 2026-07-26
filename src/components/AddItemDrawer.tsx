@@ -4,6 +4,7 @@ import { db } from '../db/database';
 import { X } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { processPaymentTransaction } from '../lib/businessLogic';
+import { checkAndFireNotifications } from '../lib/notifications';
 import { format } from 'date-fns';
 
 interface AddItemDrawerProps {
@@ -27,7 +28,10 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
   const creditCards = useLiveQuery(
-    () => db.recurringItems.where('category').equals('Credit Card').toArray(),
+    async () => {
+      const cards = await db.recurringItems.where('category').equals('Credit Card').toArray();
+      return cards.filter(c => !c.deletedAt);
+    },
     []
   );
 
@@ -71,6 +75,8 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newItem: RecurringItem = {
+      syncId: itemToEdit && itemToEdit.syncId ? itemToEdit.syncId : crypto.randomUUID(),
+      updatedAt: Date.now(),
       name,
       category,
       costEstimate,
@@ -101,6 +107,9 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         );
       }
     }
+    
+    // Check if the newly added/edited bill triggers a milestone today
+    checkAndFireNotifications();
     
     handleClose();
   };
