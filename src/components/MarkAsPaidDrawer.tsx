@@ -4,6 +4,7 @@ import { db } from '../db/database';
 import { processPaymentTransaction } from '../lib/businessLogic';
 import { X, Check, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { hasBiometricsRegistered, registerBiometrics, verifyBiometrics } from '../lib/webauthn';
 
 interface MarkAsPaidDrawerProps {
   item: RecurringItem | null;
@@ -59,6 +60,31 @@ export function MarkAsPaidDrawer({ item, isOpen, onClose }: MarkAsPaidDrawerProp
       setIsVisible(false);
       onClose();
     }, 300);
+  };
+
+  const handleToggleAccountVisibility = async () => {
+    if (showFullAccount) {
+      setShowFullAccount(false);
+      return;
+    }
+
+    if (!hasBiometricsRegistered()) {
+      const confirmSetup = window.confirm("Enable Device Security (FaceID/TouchID/PIN) to view account numbers securely?");
+      if (confirmSetup) {
+        const success = await registerBiometrics();
+        if (success) {
+          const verified = await verifyBiometrics();
+          if (verified) setShowFullAccount(true);
+        } else {
+          alert("Failed to set up device security or it was canceled.");
+        }
+      }
+    } else {
+      const verified = await verifyBiometrics();
+      if (verified) {
+        setShowFullAccount(true);
+      }
+    }
   };
 
   if (!isOpen && !isVisible) return null;
@@ -121,7 +147,7 @@ export function MarkAsPaidDrawer({ item, isOpen, onClose }: MarkAsPaidDrawerProp
                     <label className={labelClasses} style={{ marginBottom: 0 }}>Account Number</label>
                     <button 
                       type="button" 
-                      onClick={() => setShowFullAccount(!showFullAccount)}
+                      onClick={handleToggleAccountVisibility}
                       className="text-gray-400 hover:text-aqua-400 transition-colors"
                     >
                       {showFullAccount ? <EyeOff size={16} /> : <Eye size={16} />}

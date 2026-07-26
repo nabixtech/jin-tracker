@@ -44,13 +44,13 @@ class FamilyBillDatabase extends Dexie {
     });
 
     // Add lifecycle hooks for encryption/decryption
-    this.recurringItems.hook('creating', (primKey, obj, trans) => {
+    this.recurringItems.hook('creating', (_primKey, obj) => {
       if (obj.accountNumber) {
         obj.accountNumber = encryptString(obj.accountNumber);
       }
     });
 
-    this.recurringItems.hook('updating', (modifications, primKey, obj, trans) => {
+    this.recurringItems.hook('updating', (modifications: any) => {
       if (modifications.accountNumber !== undefined) {
         modifications.accountNumber = encryptString(modifications.accountNumber);
       }
