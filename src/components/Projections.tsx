@@ -4,6 +4,14 @@ import { format, parseISO } from 'date-fns';
 import { TrendingUp, CreditCard } from 'lucide-react';
 import { calculateTotalRemainingProjection } from '../lib/businessLogic';
 
+function getMonthlyCost(costEstimate: number, frequency: string): number {
+  if (frequency === 'Semi-Monthly') return costEstimate * 2;
+  if (frequency === 'Monthly') return costEstimate;
+  if (frequency === 'Semi-Annually') return costEstimate / 6;
+  if (frequency === 'Annually') return costEstimate / 12;
+  return 0; // One-Off
+}
+
 export function Projections() {
   const projectedItems = useLiveQuery(
     async () => {
@@ -12,15 +20,17 @@ export function Projections() {
         .filter(item => 
           item.status !== 'Paid' && 
           item.isVariableCost === false && 
-          !!item.endDate &&
           !item.deletedAt
         )
         .toArray();
       
-      // Sort by endDate asc
+      // Sort by endDate asc, ongoing items (no endDate) at the bottom
       items.sort((a, b) => {
-        if (a.endDate! < b.endDate!) return -1;
-        if (a.endDate! > b.endDate!) return 1;
+        if (!a.endDate && !b.endDate) return 0;
+        if (!a.endDate) return 1;
+        if (!b.endDate) return -1;
+        if (a.endDate < b.endDate) return -1;
+        if (a.endDate > b.endDate) return 1;
         return 0;
       });
 
@@ -41,10 +51,15 @@ export function Projections() {
             linkedCardName = card?.name;
           }
           
+          const monthlyCost = getMonthlyCost(item.costEstimate, item.frequency);
+          const yearlyCost = monthlyCost * 12;
+          
           return {
             ...item,
             linkedCardName,
-            projectedTotal: calculateTotalRemainingProjection(item)
+            projectedTotal: calculateTotalRemainingProjection(item),
+            monthlyCost,
+            yearlyCost
           };
         })
       );
@@ -53,6 +68,9 @@ export function Projections() {
     },
     []
   );
+
+  const totalMonthly = projectedItems ? projectedItems.reduce((sum, item) => sum + item.monthlyCost, 0) : 0;
+  const totalYearly = projectedItems ? projectedItems.reduce((sum, item) => sum + item.yearlyCost, 0) : 0;
 
   return (
     <div className="glass-panel rounded-2xl overflow-hidden relative">
@@ -70,7 +88,7 @@ export function Projections() {
 
       {!projectedItems || projectedItems.length === 0 ? (
         <div className="p-12 text-center flex flex-col items-center justify-center text-gray-500">
-          <p className="text-sm">No fixed obligations with end dates found.</p>
+          <p className="text-sm">No fixed obligations found.</p>
         </div>
       ) : (
         <div className="divide-y divide-space-700/50">
@@ -79,8 +97,8 @@ export function Projections() {
               <div>
                 <h3 className="text-base font-bold text-gray-100">{item.name}</h3>
                 <div className="flex items-center text-xs mt-1.5 space-x-3">
-                  <div className="flex items-center text-purple-400 font-medium bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                    Ends {format(parseISO(item.endDate!), 'MMM yyyy')}
+                  <div className={`flex items-center font-medium px-2 py-0.5 rounded border ${item.endDate ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-aqua-400 bg-aqua-500/10 border-aqua-500/20'}`}>
+                    {item.endDate ? `Ends ${format(parseISO(item.endDate), 'MMM yyyy')}` : `Ongoing`}
                   </div>
                   {item.linkedCardName && (
                     <div className="flex items-center text-gray-400">
@@ -91,14 +109,43 @@ export function Projections() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-500 mb-0.5 uppercase tracking-widest text-[10px] font-bold">Total Remaining</div>
-                <div className="text-lg font-bold text-gray-200">
+                <div className="text-sm text-gray-500 mb-0.5 uppercase tracking-widest text-[10px] font-bold">
+                  {item.endDate ? 'Total Remaining' : 'Next Cycle'}
+                </div>
+                <div className="text-base font-bold text-gray-200">
                   <span className="text-gray-500 font-normal mr-1 text-sm">₱</span>
                   {item.projectedTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                
+                <div className="mt-1.5 text-xs text-gray-400 text-right space-y-1">
+                  <div>
+                    <span className="text-gray-500 uppercase text-[10px] tracking-wider mr-1">Mo:</span> 
+                    <span className="font-medium text-gray-300">₱{item.monthlyCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 uppercase text-[10px] tracking-wider mr-1">Yr:</span> 
+                    <span className="font-medium text-gray-300">₱{item.yearlyCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
+
+          <div className="p-4 md:p-5 bg-space-800/60 border-t border-space-700/50 flex justify-between items-center">
+            <div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Grand Total</h3>
+            </div>
+            <div className="text-right flex items-center space-x-6">
+              <div className="text-xs">
+                <div className="text-gray-500 uppercase tracking-widest text-[10px] mb-0.5">Total / Month</div>
+                <div className="font-bold text-aqua-400 text-sm">₱{totalMonthly.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+              <div className="text-xs">
+                <div className="text-gray-500 uppercase tracking-widest text-[10px] mb-0.5">Total / Year</div>
+                <div className="font-bold text-purple-400 text-base">₱{totalYearly.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
