@@ -35,6 +35,7 @@ export const checkAndFireNotifications = async () => {
 
   for (const item of items) {
     if (!item.id) continue;
+    if (item.isAutopay) continue; // Skip alerting for Autopay bills
     
     const dueDate = parseISO(item.nextDueDate);
     const daysUntilDue = differenceInCalendarDays(dueDate, today);

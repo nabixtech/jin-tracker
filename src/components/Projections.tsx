@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import { format, parseISO } from 'date-fns';
-import { TrendingUp, CreditCard } from 'lucide-react';
+import { TrendingUp, CreditCard, Zap } from 'lucide-react';
 import { calculateTotalRemainingProjection } from '../lib/businessLogic';
 
 function getMonthlyCost(costEstimate: number, frequency: string): number {
@@ -51,12 +51,24 @@ export function Projections() {
             linkedCardName = card?.name;
           }
           
+          let autopayText = undefined;
+          if (item.isAutopay) {
+            if (item.autopayMethod === 'Cash/Bank' && item.autopayBankName) {
+              autopayText = item.autopayBankName;
+            } else if (item.autopayMethod === 'Credit Card' && item.autopayChargedToItemId) {
+              const card = await db.recurringItems.get(item.autopayChargedToItemId);
+              if (card) autopayText = card.name;
+            }
+            if (!autopayText) autopayText = item.autopayMethod || 'Autopay';
+          }
+          
           const monthlyCost = getMonthlyCost(item.costEstimate, item.frequency);
           const yearlyCost = monthlyCost * 12;
           
           return {
             ...item,
             linkedCardName,
+            autopayText,
             projectedTotal: calculateTotalRemainingProjection(item),
             monthlyCost,
             yearlyCost
@@ -100,10 +112,15 @@ export function Projections() {
                   <div className={`flex items-center font-medium px-2 py-0.5 rounded border ${item.endDate ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-aqua-400 bg-aqua-500/10 border-aqua-500/20'}`}>
                     {item.endDate ? `Ends ${format(parseISO(item.endDate), 'MMM yyyy')}` : `Ongoing`}
                   </div>
-                  {item.linkedCardName && (
+                  {item.linkedCardName && !item.isAutopay && (
                     <div className="flex items-center text-gray-400">
                       <CreditCard size={12} className="mr-1" />
                       {item.linkedCardName}
+                    </div>
+                  )}
+                  {item.isAutopay && (
+                    <div className="flex items-center text-aqua-400 bg-aqua-500/10 px-1.5 py-0.5 rounded border border-aqua-500/20 uppercase tracking-wider">
+                      <Zap size={10} className="mr-1 fill-current" /> Auto: {item.autopayText}
                     </div>
                   )}
                 </div>

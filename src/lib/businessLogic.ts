@@ -139,3 +139,17 @@ export function calculateTotalRemainingProjection(item: RecurringItem): number {
   
   return Math.max(0, total);
 }
+
+/**
+ * Deletes a payment transaction from the history without altering the item's current state.
+ */
+export async function deletePaymentTransaction(paymentId: number): Promise<void> {
+  await db.paymentHistory.delete(paymentId);
+}
+
+/**
+ * Updates a payment transaction in the history without altering the item's current state.
+ */
+export async function updatePaymentTransaction(paymentId: number, updates: Partial<Omit<import('../types').PaymentHistory, 'id' | 'itemId'>>): Promise<void> {
+  await db.paymentHistory.update(paymentId, { ...updates, updatedAt: Date.now() });
+}

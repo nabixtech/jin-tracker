@@ -23,6 +23,14 @@ export function UpcomingLedger() {
     []
   );
 
+  const creditCards = useLiveQuery(
+    async () => {
+      const cards = await db.recurringItems.where('category').equals('Credit Card').toArray();
+      return cards.filter(c => !c.deletedAt);
+    },
+    []
+  );
+
   const handleMarkPaidClick = (item: RecurringItem) => {
     setSelectedItem(item);
     setIsDrawerOpen(true);
@@ -122,10 +130,25 @@ export function UpcomingLedger() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-gray-100 group-hover:text-aqua-300 transition-colors">{item.name}</h3>
-                      <div className="flex items-center text-xs mt-1.5 space-x-3 text-gray-400">
+                      <div className="flex flex-wrap items-center text-xs mt-1.5 gap-2 md:gap-3 text-gray-400">
                         <span className="uppercase tracking-wider">{item.category}</span>
-                        <span className="w-1 h-1 rounded-full bg-gray-600"></span>
+                        <span className="w-1 h-1 rounded-full bg-gray-600 flex-shrink-0"></span>
                         <span className="uppercase tracking-wider">{item.frequency}</span>
+                        {item.isAutopay && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-aqua-500 flex-shrink-0"></span>
+                            <span className="uppercase tracking-wider text-aqua-400 flex items-center bg-aqua-500/10 px-1.5 py-0.5 rounded border border-aqua-500/20">
+                              <Zap size={10} className="mr-1 fill-current" /> Auto{(() => {
+                                if (item.autopayMethod === 'Cash/Bank' && item.autopayBankName) return `: ${item.autopayBankName}`;
+                                if (item.autopayMethod === 'Credit Card' && item.autopayChargedToItemId && creditCards) {
+                                  const cc = creditCards.find(c => c.id === item.autopayChargedToItemId);
+                                  if (cc) return `: ${cc.name}`;
+                                }
+                                return '';
+                              })()}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

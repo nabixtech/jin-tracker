@@ -18,6 +18,10 @@ export interface RecurringItem {
   accountNumber?: string;   // Encrypted account number
   remainingBalance?: number; // Tracks partial payments within a single billing cycle
   status?: 'Active' | 'Paid'; // Active by default. Paid when one-off is paid or end date is reached.
+  isAutopay?: boolean;
+  autopayMethod?: PaymentMethodType;
+  autopayChargedToItemId?: number;
+  autopayBankName?: string;
 }
 
 export interface PaymentHistory {

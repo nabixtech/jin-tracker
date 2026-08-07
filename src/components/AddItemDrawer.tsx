@@ -25,6 +25,10 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
   const [method, setMethod] = useState<PaymentMethodType>('Cash/Bank');
   const [selectedCardId, setSelectedCardId] = useState<number | undefined>(undefined);
   const [isVariableCost, setIsVariableCost] = useState<boolean>(false);
+  const [isAutopay, setIsAutopay] = useState<boolean>(false);
+  const [autopayMethod, setAutopayMethod] = useState<PaymentMethodType>('Cash/Bank');
+  const [autopayChargedToItemId, setAutopayChargedToItemId] = useState<number | undefined>(undefined);
+  const [autopayBankName, setAutopayBankName] = useState<string>('');
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
@@ -51,6 +55,10 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         setPaymentLink(itemToEdit.paymentLink || '');
         setAccountNumber(itemToEdit.accountNumber || '');
         setIsVariableCost(itemToEdit.isVariableCost);
+        setIsAutopay(itemToEdit.isAutopay || false);
+        setAutopayMethod(itemToEdit.autopayMethod || 'Cash/Bank');
+        setAutopayChargedToItemId(itemToEdit.autopayChargedToItemId);
+        setAutopayBankName(itemToEdit.autopayBankName || '');
       } else {
         setName('');
         setCategory('Subscription');
@@ -61,6 +69,10 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         setPaymentLink('');
         setAccountNumber('');
         setIsVariableCost(false);
+        setIsAutopay(false);
+        setAutopayMethod('Cash/Bank');
+        setAutopayChargedToItemId(undefined);
+        setAutopayBankName('');
       }
     }
   }, [isOpen, itemToEdit]);
@@ -86,6 +98,10 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
       frequency,
       nextDueDate,
       isVariableCost,
+      isAutopay,
+      autopayMethod: isAutopay ? autopayMethod : undefined,
+      autopayChargedToItemId: isAutopay && autopayMethod === 'Credit Card' ? autopayChargedToItemId : undefined,
+      autopayBankName: isAutopay && autopayMethod === 'Cash/Bank' ? autopayBankName : undefined,
       paymentLink: paymentLink || '',
       accountNumber: accountNumber || '',
       ...(endDate && frequency !== 'One-Off' ? { endDate } : {}),
@@ -275,6 +291,59 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
                 />
                 <label htmlFor="isVariable" className="text-sm text-gray-300 select-none">Cost varies per cycle</label>
               </div>
+
+              <div className="flex items-center mt-2 bg-space-900/50 p-3 rounded-xl border border-space-700">
+                <input 
+                  type="checkbox" id="isAutopay" 
+                  className="mr-3 h-5 w-5 text-aqua-500 focus:ring-aqua-500 border-space-600 rounded bg-space-800"
+                  checked={isAutopay} onChange={(e) => setIsAutopay(e.target.checked)}
+                />
+                <label htmlFor="isAutopay" className="text-sm text-gray-300 select-none">Auto-pay this bill</label>
+              </div>
+
+              {isAutopay && (
+                <div className="bg-space-900/50 p-4 rounded-xl border border-space-700 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div>
+                    <label className={labelClasses}>Autopay Source</label>
+                    <select className={inputClasses} value={autopayMethod} onChange={(e) => setAutopayMethod(e.target.value as PaymentMethodType)}>
+                      <option value="Cash/Bank">Cash / Bank</option>
+                      {category !== 'Credit Card' && <option value="Credit Card">Credit Card</option>}
+                    </select>
+                  </div>
+                  
+                  {autopayMethod === 'Credit Card' && creditCards && creditCards.length > 0 && (
+                    <div>
+                      <label className={labelClasses}>Which Card?</label>
+                      <select 
+                        required className={inputClasses}
+                        value={autopayChargedToItemId || ''} onChange={(e) => setAutopayChargedToItemId(parseInt(e.target.value))}
+                      >
+                        <option value="" disabled>Select card...</option>
+                        {creditCards.map(card => (
+                          <option key={card.id} value={card.id}>{card.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {autopayMethod === 'Credit Card' && (!creditCards || creditCards.length === 0) && (
+                    <p className="text-sm text-red-400 bg-red-900/20 p-3 rounded-lg border border-red-900/50">
+                      No credit cards found in your bills.
+                    </p>
+                  )}
+
+                  {autopayMethod === 'Cash/Bank' && (
+                    <div>
+                      <label className={labelClasses}>Bank Name (Optional)</label>
+                      <input 
+                        type="text" className={inputClasses}
+                        value={autopayBankName} onChange={(e) => setAutopayBankName(e.target.value)}
+                        placeholder="e.g. BPI, BDO, UnionBank"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="pt-6 md:pb-6">
                 <button 
