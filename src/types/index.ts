@@ -1,4 +1,6 @@
-export type ItemCategory = 'Subscription' | 'Credit Card' | 'Maintenance' | 'Utility';
+export type BillCategory = 'Subscription' | 'Credit Card' | 'Maintenance' | 'Utility';
+export type ExpenseCategory = 'Food & Dining' | 'Transportation' | 'Shopping' | 'Healthcare' | 'Entertainment' | 'Groceries' | 'Travel' | 'Education' | 'Personal Care' | 'Gifts' | 'Misc';
+export type ItemCategory = BillCategory | ExpenseCategory;
 export type BillingFrequency = 'Monthly' | 'Semi-Monthly' | 'Semi-Annually' | 'Annually' | 'One-Off';
 export type PaymentMethodType = 'Cash/Bank' | 'Credit Card';
 

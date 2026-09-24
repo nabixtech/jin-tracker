@@ -4,7 +4,7 @@ import { PaidSummary } from './components/PaidSummary'
 import { Projections } from './components/Projections'
 import { BottomNavigation, type TabType } from './components/BottomNavigation'
 import { AddItemDrawer } from './components/AddItemDrawer'
-import { Activity, Plus, Bell, BellOff, Cloud, CloudOff, Loader2, Download } from 'lucide-react'
+import { Activity, Plus, Receipt, Bell, BellOff, Cloud, CloudOff, Loader2, Download } from 'lucide-react'
 import { requestNotificationPermission, checkAndFireNotifications } from './lib/notifications'
 import { useGoogleLogin } from '@react-oauth/google';
 import { syncToGoogleDrive } from './lib/googleDriveSync';
@@ -20,7 +20,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [addDrawerMode, setAddDrawerMode] = useState<'bill' | 'expense' | null>(null);
   const [notificationStatus, setNotificationStatus] = useState<NotificationPermission>('default');
   const [driveToken, setDriveToken] = useState<string | null>(localStorage.getItem('google_drive_token'));
   const [isSyncing, setIsSyncing] = useState(false);
@@ -128,7 +128,7 @@ function App() {
               <Activity size={20} className="text-aqua-400 group-hover:animate-pulse" />
             </div>
             <h1 className="text-xl font-bold text-white tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400">
-              JIN<span className="text-aqua-400">TRACKER</span>
+              JIN
             </h1>
           </div>
           
@@ -192,11 +192,18 @@ function App() {
               )}
             </div>
             <button 
-              onClick={() => setIsAddDrawerOpen(true)}
-              className="flex items-center px-4 py-2 bg-space-800 hover:bg-space-700 border border-space-700 hover:border-aqua-500/50 text-aqua-400 text-sm font-bold rounded-lg transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+              onClick={() => setAddDrawerMode('expense')}
+              className="p-2 bg-space-800 hover:bg-space-700 border border-space-700 hover:border-electra-500/50 text-electra-400 rounded-lg transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+              title="Add Expense"
             >
-              <Plus size={16} className="mr-1.5" />
-              Add Bill
+              <Receipt size={18} />
+            </button>
+            <button 
+              onClick={() => setAddDrawerMode('bill')}
+              className="p-2 bg-space-800 hover:bg-space-700 border border-space-700 hover:border-aqua-500/50 text-aqua-400 rounded-lg transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+              title="Add Bill"
+            >
+              <Plus size={18} />
             </button>
           </div>
         </div>
@@ -212,8 +219,9 @@ function App() {
       <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <AddItemDrawer 
-        isOpen={isAddDrawerOpen} 
-        onClose={() => setIsAddDrawerOpen(false)} 
+        isOpen={addDrawerMode !== null} 
+        onClose={() => setAddDrawerMode(null)}
+        mode={addDrawerMode || 'bill'}
       />
     </div>
   )

@@ -6,14 +6,16 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { processPaymentTransaction } from '../lib/businessLogic';
 import { checkAndFireNotifications } from '../lib/notifications';
 import { format } from 'date-fns';
+import { guessExpenseCategory } from '../lib/categoryTagger';
 
 interface AddItemDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   itemToEdit?: RecurringItem | null;
+  mode?: 'bill' | 'expense';
 }
 
-export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProps) {
+export function AddItemDrawer({ isOpen, onClose, itemToEdit, mode = 'bill' }: AddItemDrawerProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ItemCategory>('Subscription');
   const [costEstimate, setCostEstimate] = useState<number>(0);
@@ -29,6 +31,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
   const [autopayMethod, setAutopayMethod] = useState<PaymentMethodType>('Cash/Bank');
   const [autopayChargedToItemId, setAutopayChargedToItemId] = useState<number | undefined>(undefined);
   const [autopayBankName, setAutopayBankName] = useState<string>('');
+  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
@@ -61,9 +64,9 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         setAutopayBankName(itemToEdit.autopayBankName || '');
       } else {
         setName('');
-        setCategory('Subscription');
+        setCategory(mode === 'expense' ? 'Misc' : 'Subscription');
         setCostEstimate(0);
-        setFrequency('Monthly');
+        setFrequency(mode === 'expense' ? 'One-Off' : 'Monthly');
         setNextDueDate('');
         setEndDate('');
         setPaymentLink('');
@@ -73,9 +76,18 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
         setAutopayMethod('Cash/Bank');
         setAutopayChargedToItemId(undefined);
         setAutopayBankName('');
+        setCategoryManuallySet(false);
       }
     }
-  }, [isOpen, itemToEdit]);
+  }, [isOpen, itemToEdit, mode]);
+
+  // Auto-tag expense category based on name
+  useEffect(() => {
+    if (mode === 'expense' && !categoryManuallySet && name.trim().length > 1) {
+      const guessed = guessExpenseCategory(name);
+      setCategory(guessed);
+    }
+  }, [name, mode, categoryManuallySet]);
 
   const handleClose = () => {
     setIsAnimatingOut(true);
@@ -159,7 +171,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
             </button>
             
             <h2 className="text-2xl font-bold mb-6 text-white bg-clip-text text-transparent bg-gradient-to-r from-aqua-400 to-electra-500 pr-10">
-              {itemToEdit ? 'Edit Bill' : 'Add Bill'}
+              {mode === 'expense' ? (itemToEdit ? 'Edit Expense' : 'Add Expense') : (itemToEdit ? 'Edit Bill' : 'Add Bill')}
             </h2>
           </div>
           
@@ -174,27 +186,48 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              {mode === 'expense' ? (
                 <div>
                   <label className={labelClasses}>Category</label>
-                  <select className={inputClasses} value={category} onChange={(e) => setCategory(e.target.value as ItemCategory)}>
-                    <option value="Subscription">Subscription</option>
-                    <option value="Credit Card">Credit Card</option>
-                    <option value="Maintenance">Maintenance</option>
+                  <select className={inputClasses} value={category} onChange={(e) => { setCategory(e.target.value as ItemCategory); setCategoryManuallySet(true); }}>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Groceries">Groceries</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Education">Education</option>
+                    <option value="Personal Care">Personal Care</option>
+                    <option value="Gifts">Gifts</option>
                     <option value="Utility">Utility</option>
+                    <option value="Subscription">Subscription</option>
+                    <option value="Misc">Misc</option>
                   </select>
                 </div>
-                <div>
-                  <label className={labelClasses}>Frequency</label>
-                  <select className={inputClasses} value={frequency} onChange={(e) => setFrequency(e.target.value as BillingFrequency)}>
-                    <option value="One-Off">One-Off</option>
-                    <option value="Semi-Monthly">Twice a Month (Every 15 days)</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Semi-Annually">Semi-Annually</option>
-                    <option value="Annually">Annually</option>
-                  </select>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClasses}>Category</label>
+                    <select className={inputClasses} value={category} onChange={(e) => setCategory(e.target.value as ItemCategory)}>
+                      <option value="Subscription">Subscription</option>
+                      <option value="Credit Card">Credit Card</option>
+                      <option value="Maintenance">Maintenance</option>
+                      <option value="Utility">Utility</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Frequency</label>
+                    <select className={inputClasses} value={frequency} onChange={(e) => setFrequency(e.target.value as BillingFrequency)}>
+                      <option value="One-Off">One-Off</option>
+                      <option value="Semi-Monthly">Twice a Month (Every 15 days)</option>
+                      <option value="Monthly">Monthly</option>
+                      <option value="Semi-Annually">Semi-Annually</option>
+                      <option value="Annually">Annually</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
               
               <div className={`grid ${frequency === 'One-Off' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
                 <div>
@@ -265,6 +298,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
                 </div>
               )}
 
+              {mode !== 'expense' && (<>
               <div>
                 <label className={labelClasses}>Payment Link (Optional)</label>
                 <input 
@@ -344,13 +378,14 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit }: AddItemDrawerProp
                   )}
                 </div>
               )}
+              </>)}
               
               <div className="pt-6 md:pb-6">
                 <button 
                   type="submit"
                   className="w-full py-3.5 text-sm font-bold text-space-900 bg-aqua-400 hover:bg-aqua-300 rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all uppercase tracking-wide"
                 >
-                  {itemToEdit ? 'Update Bill' : 'Save Bill'}
+                  {mode === 'expense' ? 'Save Expense' : (itemToEdit ? 'Update Bill' : 'Save Bill')}
                 </button>
               </div>
             </form>
