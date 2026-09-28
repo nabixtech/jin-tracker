@@ -13,9 +13,11 @@ interface AddItemDrawerProps {
   onClose: () => void;
   itemToEdit?: RecurringItem | null;
   mode?: 'bill' | 'expense';
+  initialName?: string;
+  initialAmount?: number;
 }
 
-export function AddItemDrawer({ isOpen, onClose, itemToEdit, mode = 'bill' }: AddItemDrawerProps) {
+export function AddItemDrawer({ isOpen, onClose, itemToEdit, mode = 'bill', initialName = '', initialAmount = 0 }: AddItemDrawerProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ItemCategory>('Subscription');
   const [costEstimate, setCostEstimate] = useState<number>(0);
@@ -63,9 +65,9 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit, mode = 'bill' }: Ad
         setAutopayChargedToItemId(itemToEdit.autopayChargedToItemId);
         setAutopayBankName(itemToEdit.autopayBankName || '');
       } else {
-        setName('');
+        setName(initialName);
         setCategory(mode === 'expense' ? 'Misc' : 'Subscription');
-        setCostEstimate(0);
+        setCostEstimate(initialAmount);
         setFrequency(mode === 'expense' ? 'One-Off' : 'Monthly');
         setNextDueDate('');
         setEndDate('');
@@ -79,7 +81,7 @@ export function AddItemDrawer({ isOpen, onClose, itemToEdit, mode = 'bill' }: Ad
         setCategoryManuallySet(false);
       }
     }
-  }, [isOpen, itemToEdit, mode]);
+  }, [isOpen, itemToEdit, mode, initialName, initialAmount]);
 
   // Auto-tag expense category based on name
   useEffect(() => {

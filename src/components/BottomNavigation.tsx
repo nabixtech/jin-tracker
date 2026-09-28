@@ -1,13 +1,14 @@
-import { Home, FileText, TrendingUp } from 'lucide-react';
+import { Home, FileText, TrendingUp, Mic, Wrench } from 'lucide-react';
 
 export type TabType = 'dashboard' | 'history' | 'projections';
 
 interface BottomNavigationProps {
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
+  onMicClick: () => void;
 }
 
-export function BottomNavigation({ activeTab, setActiveTab }: BottomNavigationProps) {
+export function BottomNavigation({ activeTab, setActiveTab, onMicClick }: BottomNavigationProps) {
   return (
     <div className="fixed bottom-0 inset-x-0 z-40 bg-space-900/90 backdrop-blur-xl border-t border-space-800 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pb-safe">
       <div className="max-w-md mx-auto px-6 h-16 md:h-20 flex items-center justify-around">
@@ -32,6 +33,15 @@ export function BottomNavigation({ activeTab, setActiveTab }: BottomNavigationPr
           <span className="text-[10px] font-bold uppercase tracking-wider">Forecast</span>
         </button>
 
+        <div className="relative -top-5">
+          <button 
+            onClick={onMicClick}
+            className="flex items-center justify-center w-14 h-14 bg-gradient-to-r from-purple-500 to-aqua-500 rounded-full shadow-[0_4px_20px_rgba(168,85,247,0.5)] text-white hover:scale-105 transition-transform"
+          >
+            <Mic size={28} />
+          </button>
+        </div>
+
         <button 
           onClick={() => setActiveTab('history')}
           className={`flex flex-col items-center justify-center w-20 h-full transition-colors ${
@@ -41,6 +51,11 @@ export function BottomNavigation({ activeTab, setActiveTab }: BottomNavigationPr
           <FileText size={24} className={`mb-1 transition-transform ${activeTab === 'history' ? 'scale-110' : ''}`} />
           <span className="text-[10px] font-bold uppercase tracking-wider">History</span>
         </button>
+
+        <div className="w-20 h-full flex flex-col items-center justify-center pointer-events-none opacity-50 text-gray-600">
+          <Wrench size={24} className="mb-1" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">WIP</span>
+        </div>
 
       </div>
     </div>

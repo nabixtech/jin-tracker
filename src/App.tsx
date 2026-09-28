@@ -4,7 +4,7 @@ import { PaidSummary } from './components/PaidSummary'
 import { Projections } from './components/Projections'
 import { BottomNavigation, type TabType } from './components/BottomNavigation'
 import { AddItemDrawer } from './components/AddItemDrawer'
-import { Activity, Plus, Receipt, Bell, BellOff, Cloud, CloudOff, Loader2, Download } from 'lucide-react'
+import { Activity, Plus, Receipt, Bell, BellOff, Cloud, CloudOff, Loader2, Download, Mic } from 'lucide-react'
 import { requestNotificationPermission, checkAndFireNotifications } from './lib/notifications'
 import { useGoogleLogin } from '@react-oauth/google';
 import { syncToGoogleDrive } from './lib/googleDriveSync';
@@ -27,6 +27,83 @@ function App() {
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(localStorage.getItem('last_sync_time'));
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [spokenText, setSpokenText] = useState('');
+  const [spokenAmount, setSpokenAmount] = useState<number>(0);
+  const [isListening, setIsListening] = useState(false);
+
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Your browser does not support speech recognition. Try using Chrome.');
+      return;
+    }
+
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'fil-PH'; // Support Filipino and English better
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      let transcript = event.results[0][0].transcript;
+      let amount = 0;
+
+      // Look for digit-based numbers first
+      const digitMatch = transcript.match(/\b\d+(?:\.\d+)?\b/);
+
+      if (digitMatch) {
+        amount = parseFloat(digitMatch[0]);
+        transcript = transcript.replace(digitMatch[0], '');
+      } else {
+        // Fallback for common word-based numbers (English & Filipino)
+        const wordMap: Record<string, number> = {
+          'one hundred': 100, 'isang daan': 100, '1 hundred': 100,
+          'two hundred': 200, 'dalawang daan': 200, '2 hundred': 200,
+          'three hundred': 300, 'tatlong daan': 300, '3 hundred': 300,
+          'four hundred': 400, 'apat na raan': 400, '4 hundred': 400,
+          'five hundred': 500, 'limang daan': 500, '5 hundred': 500,
+          'one thousand': 1000, 'isang libo': 1000, '1 thousand': 1000,
+          'bente': 20, 'twenty': 20, 'trenta': 30, 'thirty': 30,
+          'kwarenta': 40, 'forty': 40, 'singkwenta': 50, 'fifty': 50,
+          'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+          'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+        };
+
+        for (const [word, value] of Object.entries(wordMap)) {
+          const regex = new RegExp(`\\b${word}\\b`, 'i');
+          if (regex.test(transcript)) {
+            amount = value;
+            transcript = transcript.replace(regex, '');
+            break;
+          }
+        }
+      }
+
+      setSpokenAmount(amount);
+
+      // Clean up currency words and extra spaces
+      transcript = transcript.replace(/\b(?:pesos|peso|php|bucks)\b/gi, '').trim();
+
+      setSpokenText(transcript);
+      setAddDrawerMode('expense');
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   const handleSync = useCallback(async (token: string | null = driveToken) => {
     if (!token) return;
@@ -91,7 +168,7 @@ function App() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-    
+
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -131,10 +208,10 @@ function App() {
               JIN
             </h1>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             {isInstallable && (
-              <button 
+              <button
                 onClick={handleInstallClick}
                 className="p-2 text-aqua-400 bg-space-800 hover:bg-space-700 border border-aqua-500/30 hover:border-aqua-500/80 rounded-lg transition-all shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                 title="Install App"
@@ -143,7 +220,7 @@ function App() {
               </button>
             )}
             {notificationStatus === 'default' && (
-              <button 
+              <button
                 onClick={async () => {
                   const granted = await requestNotificationPermission();
                   if (granted) {
@@ -160,7 +237,7 @@ function App() {
               </button>
             )}
             {notificationStatus === 'denied' && (
-              <button 
+              <button
                 onClick={() => {
                   alert("Notifications are blocked by your browser.\n\nTo fix this: Click the Lock/Settings icon in your browser's address bar (next to the URL), find 'Notifications', and change it to 'Allow'.");
                 }}
@@ -171,7 +248,7 @@ function App() {
               </button>
             )}
             <div className="relative flex group items-center">
-              <button 
+              <button
                 onClick={() => driveToken ? handleSync() : loginToDrive()}
                 disabled={isSyncing}
                 className={`p-2 bg-space-800 border rounded-lg transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)] ${driveToken ? 'text-green-400 border-green-500/30 hover:border-green-500/80 hover:bg-space-700' : 'text-gray-400 border-space-700 hover:border-aqua-500/50 hover:bg-space-700 hover:text-aqua-400'} disabled:opacity-50`}
@@ -191,14 +268,14 @@ function App() {
                 </div>
               )}
             </div>
-            <button 
+            <button
               onClick={() => setAddDrawerMode('expense')}
               className="p-2 bg-space-800 hover:bg-space-700 border border-space-700 hover:border-electra-500/50 text-electra-400 rounded-lg transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]"
               title="Add Expense"
             >
               <Receipt size={18} />
             </button>
-            <button 
+            <button
               onClick={() => setAddDrawerMode('bill')}
               className="p-2 bg-space-800 hover:bg-space-700 border border-space-700 hover:border-aqua-500/50 text-aqua-400 rounded-lg transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]"
               title="Add Bill"
@@ -216,12 +293,43 @@ function App() {
         {activeTab === 'projections' && <Projections />}
       </main>
 
-      <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-      
-      <AddItemDrawer 
-        isOpen={addDrawerMode !== null} 
-        onClose={() => setAddDrawerMode(null)}
+      <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} onMicClick={startListening} />
+
+      {isListening && (
+        <div className="fixed inset-0 z-[60] bg-space-900/90 backdrop-blur-md flex flex-col items-center justify-center transition-opacity duration-300">
+          <div className="text-white text-2xl font-bold mb-8">Listening...</div>
+          <div className="relative">
+            <div className="absolute inset-0 bg-red-500/30 rounded-full animate-ping"></div>
+            <button
+              onClick={() => {
+                setIsListening(false);
+                // Also abort recognition here if possible, but state will clear it
+              }}
+              className="relative w-24 h-24 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all"
+            >
+              <Mic size={48} className="text-white animate-pulse" />
+            </button>
+          </div>
+          <p className="mt-8 text-gray-400 text-sm">Speak your expense (e.g., "Lomi Food")</p>
+          <button
+            onClick={() => setIsListening(false)}
+            className="mt-12 text-gray-400 hover:text-white px-6 py-2 border border-space-700 rounded-full"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <AddItemDrawer
+        isOpen={addDrawerMode !== null}
+        onClose={() => {
+          setAddDrawerMode(null);
+          setSpokenText('');
+          setSpokenAmount(0);
+        }}
         mode={addDrawerMode || 'bill'}
+        initialName={spokenText}
+        initialAmount={spokenAmount}
       />
     </div>
   )
